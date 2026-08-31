@@ -108,11 +108,12 @@ trim() {
 scriptDir="$(dirname "$0")"
 scriptName="$(basename "$0")"
 
-# parse distributionUrl and optional distributionSha256Sum, requires .mvn/wrapper/maven-wrapper.properties
+# parse distributionUrl and optional distributionSha256Sum or distributionSha512Sum, requires .mvn/wrapper/maven-wrapper.properties
 while IFS="=" read -r key value; do
   case "${key-}" in
   distributionUrl) distributionUrl=$(trim "${value-}") ;;
   distributionSha256Sum) distributionSha256Sum=$(trim "${value-}") ;;
+  distributionSha512Sum) distributionSha512Sum=$(trim "${value-}") ;;
   esac
 done <"$scriptDir/.mvn/wrapper/maven-wrapper.properties"
 [ -n "${distributionUrl-}" ] || die "cannot read distributionUrl property in $scriptDir/.mvn/wrapper/maven-wrapper.properties"
@@ -222,36 +223,50 @@ END
   "$(native_path "$JAVACMD")" -cp "$(native_path "$TMP_DOWNLOAD_DIR")" Downloader "$distributionUrl" "$(native_path "$targetZip")"
 fi
 
-# If specified, validate the SHA-256 sum of the Maven distribution zip file
-if [ -n "${distributionSha256Sum-}" ]; then
-  distributionSha256Result=false
-  computedSha256Sum=""
+# If specified, validate the checksum of the Maven distribution zip file.
+# SHA-512 is the algorithm published for the Maven distributions; a
+# distributionSha256Sum left over from an older wrapper is still honoured.
+if [ -n "${distributionSha512Sum-}" ]; then
+  distributionSumProperty=distributionSha512Sum
+  distributionSumBits=512
+  distributionExpectedSum=$distributionSha512Sum
+elif [ -n "${distributionSha256Sum-}" ]; then
+  distributionSumProperty=distributionSha256Sum
+  distributionSumBits=256
+  distributionExpectedSum=$distributionSha256Sum
+else
+  distributionSumProperty=""
+fi
+if [ -n "$distributionSumProperty" ]; then
+  distributionSumResult=false
+  computedSum=""
   if [ "$MVN_CMD" = mvnd.sh ]; then
     echo "Checksum validation is not supported for maven-mvnd." >&2
-    echo "Please disable validation by removing 'distributionSha256Sum' from your maven-wrapper.properties." >&2
+    echo "Disable validation by removing '$distributionSumProperty' from your maven-wrapper.properties." >&2
     exit 1
-  elif command -v sha256sum >/dev/null; then
-    if echo "$distributionSha256Sum  $TMP_DOWNLOAD_DIR/$distributionUrlName" | sha256sum -c --strict - >/dev/null 2>&1; then
-      distributionSha256Result=true
+  elif command -v "sha${distributionSumBits}sum" >/dev/null; then
+    if echo "$distributionExpectedSum  $TMP_DOWNLOAD_DIR/$distributionUrlName" | "sha${distributionSumBits}sum" -c --strict - >/dev/null 2>&1; then
+      distributionSumResult=true
     else
-      computedSha256Sum=$(sha256sum "$TMP_DOWNLOAD_DIR/$distributionUrlName" | cut -b -64)
+      computedSum=$("sha${distributionSumBits}sum" "$TMP_DOWNLOAD_DIR/$distributionUrlName" | cut -d " " -f 1)
     fi
   elif command -v shasum >/dev/null; then
-    if echo "$distributionSha256Sum  $TMP_DOWNLOAD_DIR/$distributionUrlName" | shasum -a 256 -c >/dev/null 2>&1; then
-      distributionSha256Result=true
+    if echo "$distributionExpectedSum  $TMP_DOWNLOAD_DIR/$distributionUrlName" | shasum -a "$distributionSumBits" -c >/dev/null 2>&1; then
+      distributionSumResult=true
     else
-      computedSha256Sum=$(shasum "$TMP_DOWNLOAD_DIR/$distributionUrlName" | cut -b -64)
+      computedSum=$(shasum -a "$distributionSumBits" "$TMP_DOWNLOAD_DIR/$distributionUrlName" | cut -d " " -f 1)
     fi
   else
-    echo "Checksum validation was requested but neither 'sha256sum' or 'shasum' are available." >&2
-    echo "Please install either command, or disable validation by removing 'distributionSha256Sum' from your maven-wrapper.properties." >&2
+    echo "Checksum validation was requested but neither 'sha${distributionSumBits}sum' nor 'shasum' is available." >&2
+    echo "Install either command, or disable validation by removing '$distributionSumProperty' from your maven-wrapper.properties." >&2
     exit 1
   fi
-  if [ $distributionSha256Result = false ]; then
-    echo "Error: Failed to validate Maven distribution SHA-256, your Maven distribution might be compromised." >&2
-    echo "If you updated your Maven version, you need to update the specified distributionSha256Sum property." >&2
-    echo "expected: $distributionSha256Sum" >&2
-    echo "received: $computedSha256Sum" >&2
+  if [ $distributionSumResult = false ]; then
+    echo "Error: Failed to validate the Maven distribution SHA-$distributionSumBits." >&2
+    echo "Your Maven distribution might be compromised." >&2
+    echo "If you updated your Maven version, you need to update the specified $distributionSumProperty property." >&2
+    echo "expected: $distributionExpectedSum" >&2
+    echo "received: $computedSum" >&2
     exit 1
   fi
 fi

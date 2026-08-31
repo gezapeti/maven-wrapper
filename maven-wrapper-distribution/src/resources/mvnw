@@ -278,34 +278,55 @@ fi
 # End of extension
 ##########################################################################################
 
-# If specified, validate the SHA-256 sum of the Maven wrapper jar file
+# If specified, validate the checksum of the Maven wrapper jar file.
+# SHA-512 is the algorithm published for the wrapper jar; a wrapperSha256Sum
+# left over from an older wrapper is still honoured.
 wrapperSha256Sum=""
+wrapperSha512Sum=""
 while IFS="=" read -r key value; do
-  case "$key" in wrapperSha256Sum)
-    wrapperSha256Sum=$(trim "${value-}")
-    break
-    ;;
+  case "$key" in
+  wrapperSha256Sum) wrapperSha256Sum=$(trim "${value-}") ;;
+  wrapperSha512Sum) wrapperSha512Sum=$(trim "${value-}") ;;
   esac
 done <"$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.properties"
-if [ -n "$wrapperSha256Sum" ]; then
-  wrapperSha256Result=false
-  if command -v sha256sum >/dev/null; then
-    if echo "$wrapperSha256Sum  $wrapperJarPath" | sha256sum -c --strict - >/dev/null 2>&1; then
-      wrapperSha256Result=true
+if [ -n "$wrapperSha512Sum" ]; then
+  wrapperSumProperty=wrapperSha512Sum
+  wrapperSumBits=512
+  wrapperExpectedSum=$wrapperSha512Sum
+elif [ -n "$wrapperSha256Sum" ]; then
+  wrapperSumProperty=wrapperSha256Sum
+  wrapperSumBits=256
+  wrapperExpectedSum=$wrapperSha256Sum
+else
+  wrapperSumProperty=""
+fi
+if [ -n "$wrapperSumProperty" ]; then
+  wrapperSumResult=false
+  wrapperComputedSum=""
+  if command -v "sha${wrapperSumBits}sum" >/dev/null; then
+    if echo "$wrapperExpectedSum  $wrapperJarPath" | "sha${wrapperSumBits}sum" -c --strict - >/dev/null 2>&1; then
+      wrapperSumResult=true
+    else
+      wrapperComputedSum=$("sha${wrapperSumBits}sum" "$wrapperJarPath" | cut -d " " -f 1)
     fi
   elif command -v shasum >/dev/null; then
-    if echo "$wrapperSha256Sum  $wrapperJarPath" | shasum -a 256 -c >/dev/null 2>&1; then
-      wrapperSha256Result=true
+    if echo "$wrapperExpectedSum  $wrapperJarPath" | shasum -a "$wrapperSumBits" -c >/dev/null 2>&1; then
+      wrapperSumResult=true
+    else
+      wrapperComputedSum=$(shasum -a "$wrapperSumBits" "$wrapperJarPath" | cut -d " " -f 1)
     fi
   else
-    echo "Checksum validation was requested but neither 'sha256sum' or 'shasum' are available." >&2
-    echo "Please install either command, or disable validation by removing 'wrapperSha256Sum' from your maven-wrapper.properties." >&2
+    echo "Checksum validation was requested but neither 'sha${wrapperSumBits}sum' nor 'shasum' is available." >&2
+    echo "Install either command, or disable validation by removing '$wrapperSumProperty' from your maven-wrapper.properties." >&2
     exit 1
   fi
-  if [ $wrapperSha256Result = false ]; then
-    echo "Error: Failed to validate Maven wrapper SHA-256, your Maven wrapper might be compromised." >&2
+  if [ $wrapperSumResult = false ]; then
+    echo "Error: Failed to validate the Maven wrapper SHA-$wrapperSumBits." >&2
+    echo "Your Maven wrapper might be compromised." >&2
     echo "Investigate or delete $wrapperJarPath to attempt a clean download." >&2
-    echo "If you updated your Maven version, you need to update the specified wrapperSha256Sum property." >&2
+    echo "If you updated your Maven version, you need to update the specified $wrapperSumProperty property." >&2
+    echo "expected: $wrapperExpectedSum" >&2
+    echo "received: $wrapperComputedSum" >&2
     exit 1
   fi
 fi

@@ -190,12 +190,31 @@ used.
 ## Checksum verification of downloaded binaries
 
 To avoid supply-chain-attacks by downloading a corrupted artifact, it
-is possible to specify checksums for both the *maven-wrapper.jar* and 
+is possible to specify checksums for both the *maven-wrapper.jar* and
 the downloaded distribution. To apply verification, add the expected
-file's SHA-256 sum in hex notation, using only small caps, to 
-`maven-wrapper.properties`. The property for validating the 
-*maven-wrapper.jar* file is named `wrapperSha256Sum` whereas the 
-distribution file property is named `distributionSha256Sum`.
+file's SHA-512 sum in hex notation, using only small caps, to
+`maven-wrapper.properties`. The property for validating the
+*maven-wrapper.jar* file is named `wrapperSha512Sum`, whereas the
+distribution file property is named `distributionSha512Sum`.
+
+SHA-512 is used because it is the only strong checksum published for these
+files. The Apache Maven distributions carry a `.sha512` file next to the
+archive, both on [the download page](https://maven.apache.org/download.cgi)
+and in the repository:
+
+    https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip.sha512
+
+The file contains the bare checksum, so its content can be copied into
+`maven-wrapper.properties` verbatim.
+
+### Migrating from SHA-256
+
+The older `wrapperSha256Sum` and `distributionSha256Sum` properties are
+still verified when present, so existing wrappers keep working. They are
+deprecated because no SHA-256 checksum is published for either file, which
+left users computing the value themselves. The matching `-DwrapperSha256Sum`
+and `-DdistributionSha256Sum` plugin parameters are ignored as of 3.3.5 and
+the plugin warns when they are set; use the SHA-512 parameters instead.
 
 ## Internals
 

@@ -47,7 +47,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -262,5 +267,46 @@ public class InstallerTest {
             Files.createFile(file);
         }
         Files.setLastModifiedTime(file, FileTime.fromMillis(System.currentTimeMillis()));
+    }
+
+    @Test
+    void defaultConfigurationVerifiesNothingAndDoesNotThrow() throws Exception {
+        // a WrapperConfiguration built programmatically must not NPE on the checksum fields
+        WrapperConfiguration fresh = new WrapperConfiguration();
+        assertEquals("", fresh.getDistributionSha256Sum());
+        assertEquals("", fresh.getDistributionSha512Sum());
+    }
+
+    @Test
+    void sha512SumIsPreferredOverSha256Sum() throws Exception {
+        createTestZip(zipDestination);
+        configuration.setDistributionSha256Sum("sha256-value");
+        configuration.setDistributionSha512Sum("sha512-value");
+
+        install.createDist(configuration);
+
+        verify(verifier)
+                .verify(
+                        any(Path.class),
+                        eq("distributionSha512Sum"),
+                        eq(Verifier.SHA_512_ALGORITHM),
+                        eq("sha512-value"));
+        verify(verifier, never())
+                .verify(any(Path.class), eq("distributionSha256Sum"), eq(Verifier.SHA_256_ALGORITHM), anyString());
+    }
+
+    @Test
+    void legacySha256SumIsStillVerified() throws Exception {
+        createTestZip(zipDestination);
+        configuration.setDistributionSha256Sum("sha256-value");
+
+        install.createDist(configuration);
+
+        verify(verifier)
+                .verify(
+                        any(Path.class),
+                        eq("distributionSha256Sum"),
+                        eq(Verifier.SHA_256_ALGORITHM),
+                        eq("sha256-value"));
     }
 }

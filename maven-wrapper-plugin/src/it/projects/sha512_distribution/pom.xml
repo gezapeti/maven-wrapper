@@ -41,16 +41,13 @@ under the License.
           <configuration>
             <executable>mvnw${cmd}</executable>
             <successCodes>
-              <!-- the deprecated sha256 property is ignored, so the wrapper runs through -->
-              <successCode>0</successCode>
+              <successCode>1</successCode>
             </successCodes>
             <arguments>
               <argument>-v</argument>
             </arguments>
             <environmentVariables>
               <MVNW_VERBOSE>true</MVNW_VERBOSE>
-              <HOME>${project.build.directory}</HOME>
-              <USERPROFILE>${project.build.directory}</USERPROFILE>
             </environmentVariables>
           </configuration>
         </plugin>
