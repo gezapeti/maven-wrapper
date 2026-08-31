@@ -29,7 +29,7 @@ assert properties.text.contains('distributionSha256Sum=7e0c63c6a99639e57cc64375d
 
 log = new File(basedir, 'build.log').text
 // check "mvn wrapper:wrapper" output
-assert log.contains('Error: Failed to validate Maven distribution SHA-256, your Maven distribution might be compromised.')
+assert log.contains('Error: Failed to validate the Maven distribution SHA-256.')
 assert !log.contains('shasum:')
 
 // check "mvnw -v" output

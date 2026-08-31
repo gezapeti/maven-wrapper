@@ -134,15 +134,28 @@ if ($env:MVNW_USERNAME -and $env:MVNW_PASSWORD) {
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $webclient.DownloadFile($distributionUrl, "$TMP_DOWNLOAD_DIR/$distributionUrlName") | Out-Null
 
-# If specified, validate the SHA-256 sum of the Maven distribution zip file
-$distributionSha256Sum = (Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData).distributionSha256Sum
-if ($distributionSha256Sum) {
+# If specified, validate the checksum of the Maven distribution zip file.
+# SHA-512 is the algorithm published for the Maven distributions; a
+# distributionSha256Sum left over from an older wrapper is still honoured.
+$wrapperProperties = Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData
+$distributionSum = $wrapperProperties.distributionSha512Sum
+$distributionSumAlgorithm = "SHA512"
+$distributionSumLabel = "SHA-512"
+$distributionSumProperty = "distributionSha512Sum"
+if (!$distributionSum) {
+  $distributionSum = $wrapperProperties.distributionSha256Sum
+  $distributionSumAlgorithm = "SHA256"
+  $distributionSumLabel = "SHA-256"
+  $distributionSumProperty = "distributionSha256Sum"
+}
+if ($distributionSum) {
   if ($USE_MVND) {
-    Write-Error "Checksum validation is not supported for maven-mvnd. `nPlease disable validation by removing 'distributionSha256Sum' from your maven-wrapper.properties."
+    Write-Error "Checksum validation is not supported for maven-mvnd. Disable validation by removing '$distributionSumProperty' from your maven-wrapper.properties."
   }
   Import-Module $PSHOME\Modules\Microsoft.PowerShell.Utility -Function Get-FileHash
-  if ((Get-FileHash "$TMP_DOWNLOAD_DIR/$distributionUrlName" -Algorithm SHA256).Hash.ToLower() -ne $distributionSha256Sum) {
-    Write-Error "Error: Failed to validate Maven distribution SHA-256, your Maven distribution might be compromised. If you updated your Maven version, you need to update the specified distributionSha256Sum property."
+  $computedSum = (Get-FileHash "$TMP_DOWNLOAD_DIR/$distributionUrlName" -Algorithm $distributionSumAlgorithm).Hash.ToLower()
+  if ($computedSum -ne $distributionSum) {
+    Write-Error "Error: Failed to validate the Maven distribution $distributionSumLabel. Your Maven distribution might be compromised. If you updated your Maven version, you need to update the specified $distributionSumProperty property. Expected $distributionSum but received $computedSum."
   }
 }
 

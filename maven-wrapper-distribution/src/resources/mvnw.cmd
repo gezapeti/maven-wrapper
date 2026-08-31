@@ -153,19 +153,38 @@ if exist %WRAPPER_JAR% (
 )
 @REM End of extension
 
-@REM If specified, validate the SHA-256 sum of the Maven wrapper jar file
-SET WRAPPER_SHA_256_SUM=""
+@REM If specified, validate the checksum of the Maven wrapper jar file.
+@REM SHA-512 is the algorithm published for the wrapper jar; a wrapperSha256Sum
+@REM left over from an older wrapper is still honoured.
+SET WRAPPER_SHA_SUM=""
+SET WRAPPER_SHA_ALGORITHM=
+SET WRAPPER_SHA_LABEL=
+SET WRAPPER_SHA_PROPERTY=
 FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.properties") DO (
-    IF "%%A"=="wrapperSha256Sum" SET WRAPPER_SHA_256_SUM=%%B
+    IF "%%A"=="wrapperSha256Sum" (
+        SET WRAPPER_SHA_SUM=%%B
+        SET WRAPPER_SHA_ALGORITHM=SHA256
+        SET WRAPPER_SHA_LABEL=SHA-256
+        SET WRAPPER_SHA_PROPERTY=wrapperSha256Sum
+    )
 )
-IF NOT %WRAPPER_SHA_256_SUM%=="" (
+FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.properties") DO (
+    IF "%%A"=="wrapperSha512Sum" (
+        SET WRAPPER_SHA_SUM=%%B
+        SET WRAPPER_SHA_ALGORITHM=SHA512
+        SET WRAPPER_SHA_LABEL=SHA-512
+        SET WRAPPER_SHA_PROPERTY=wrapperSha512Sum
+    )
+)
+IF NOT %WRAPPER_SHA_SUM%=="" (
     powershell -Command "&{"^
        "Import-Module $PSHOME\Modules\Microsoft.PowerShell.Utility -Function Get-FileHash;"^
-       "$hash = (Get-FileHash \"%WRAPPER_JAR%\" -Algorithm SHA256).Hash.ToLower();"^
-       "If('%WRAPPER_SHA_256_SUM%' -ne $hash){"^
-       "  Write-Error 'Error: Failed to validate Maven wrapper SHA-256, your Maven wrapper might be compromised.';"^
+       "$hash = (Get-FileHash \"%WRAPPER_JAR%\" -Algorithm %WRAPPER_SHA_ALGORITHM%).Hash.ToLower();"^
+       "If('%WRAPPER_SHA_SUM%' -ne $hash){"^
+       "  Write-Error 'Error: Failed to validate the Maven wrapper %WRAPPER_SHA_LABEL%.';"^
+       "  Write-Error 'Your Maven wrapper might be compromised.';"^
        "  Write-Error 'Investigate or delete %WRAPPER_JAR% to attempt a clean download.';"^
-       "  Write-Error 'If you updated your Maven version, you need to update the specified wrapperSha256Sum property.';"^
+       "  Write-Error 'If you updated your Maven version, you need to update the specified %WRAPPER_SHA_PROPERTY% property.';"^
        "  exit 1;"^
        "}"^
        "}"

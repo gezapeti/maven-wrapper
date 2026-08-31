@@ -190,12 +190,34 @@ used.
 ## Checksum verification of downloaded binaries
 
 To avoid supply-chain-attacks by downloading a corrupted artifact, it
-is possible to specify checksums for both the *maven-wrapper.jar* and 
+is possible to specify checksums for both the *maven-wrapper.jar* and
 the downloaded distribution. To apply verification, add the expected
-file's SHA-256 sum in hex notation, using only small caps, to 
-`maven-wrapper.properties`. The property for validating the 
-*maven-wrapper.jar* file is named `wrapperSha256Sum` whereas the 
-distribution file property is named `distributionSha256Sum`.
+file's checksum in hex notation, using only small caps, to
+`maven-wrapper.properties`. The properties for validating the
+*maven-wrapper.jar* file are named `wrapperSha512Sum` and `wrapperSha256Sum`,
+whereas the distribution file properties are named `distributionSha512Sum`
+and `distributionSha256Sum`.
+
+SHA-512 is recommended, because it is the checksum that is actually
+published. Both files carry a `.sha512` next to them in the repository they
+are downloaded from, holding the bare checksum, so its content can be copied
+into `maven-wrapper.properties` verbatim:
+
+    https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip.sha512
+    https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.5/maven-wrapper-3.3.5.jar.sha512
+
+For the Maven distributions the same checksums are linked from
+[the download page](https://maven.apache.org/download.cgi). Every Maven
+release since 3.9.1 publishes one. The wrapper's own `.sha512` files are
+published as of Maven Wrapper 3.3.5.
+
+The SHA-256 properties are deprecated in favour of SHA-512, but they keep
+working and the plugin still writes them, so existing setups are unaffected.
+The wrapper's own artifacts are published with a `.sha256` as well. Note that
+the Maven distributions are not: no SHA-256 checksum is published for them, so
+a `distributionSha256Sum` has to be computed by hand.
+
+If both properties are set for the same file, the SHA-512 one is verified.
 
 ## Internals
 

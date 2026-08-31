@@ -67,4 +67,40 @@ under the License.
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>apache-release</id>
+      <build>
+        <plugins>
+          <!-- MWRAPPER-117: publish the checksums of the wrapper distribution archives,
+               so that they can be verified against an official source. -->
+          <plugin>
+            <groupId>net.nicoulaj.maven.plugins</groupId>
+            <artifactId>checksum-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>distribution-checksum</id>
+                <goals>
+                  <goal>artifacts</goal>
+                </goals>
+                <!-- run before maven-gpg-plugin:sign, see the parent's source-release-checksum -->
+                <phase>post-integration-test</phase>
+                <configuration>
+                  <algorithms>
+                    <algorithm>SHA-256</algorithm>
+                    <algorithm>SHA-512</algorithm>
+                  </algorithms>
+                  <excludeMainArtifact>true</excludeMainArtifact>
+                  <includeClassifiers>only-script,script,source,bin</includeClassifiers>
+                  <csvSummary>false</csvSummary>
+                  <attachChecksums>true</attachChecksums>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

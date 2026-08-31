@@ -123,19 +123,49 @@ public class WrapperMojo extends AbstractMojo {
      * The expected SHA-256 checksum of the <i>maven-wrapper.jar</i> that is
      * used to load the configured Maven distribution.
      *
+     * <p>
+     * Still honoured, but prefer {@link #wrapperSha512Sum}: SHA-512 is the checksum
+     * published alongside the wrapper jar, so its value does not have to be computed by hand.
+     *
      * @since 3.2.0
+     * @deprecated prefer {@link #wrapperSha512Sum}; this parameter keeps working
      */
+    @Deprecated
     @Parameter(property = "wrapperSha256Sum")
     private String wrapperSha256Sum;
+
+    /**
+     * The expected SHA-512 checksum of the <i>maven-wrapper.jar</i> that is
+     * used to load the configured Maven distribution.
+     *
+     * @since 3.3.5
+     */
+    @Parameter(property = "wrapperSha512Sum")
+    private String wrapperSha512Sum;
 
     /**
      * The expected SHA-256 checksum of the Maven distribution that is
      * executed by the installed wrapper.
      *
+     * <p>
+     * Still honoured, but prefer {@link #distributionSha512Sum}: no SHA-256 checksum is
+     * published for the Maven distributions, so its value has to be computed by hand.
+     *
      * @since 3.2.0
+     * @deprecated prefer {@link #distributionSha512Sum}; this parameter keeps working
      */
+    @Deprecated
     @Parameter(property = "distributionSha256Sum")
     private String distributionSha256Sum;
+
+    /**
+     * The expected SHA-512 checksum of the Maven distribution that is
+     * executed by the installed wrapper.
+     *
+     * @since 3.3.5
+     */
+    @Parameter(property = "distributionSha512Sum")
+    private String distributionSha512Sum;
 
     /**
      * Determines if the Maven distribution should be downloaded
@@ -341,11 +371,19 @@ public class WrapperMojo extends AbstractMojo {
                         .append(distributionSha256Sum)
                         .append(System.lineSeparator());
             }
+            if (distributionSha512Sum != null) {
+                out.append("distributionSha512Sum=")
+                        .append(distributionSha512Sum)
+                        .append(System.lineSeparator());
+            }
             if (!distributionType.equals(TYPE_ONLY_SCRIPT)) {
                 out.append("wrapperUrl=").append(wrapperUrl).append(System.lineSeparator());
             }
             if (wrapperSha256Sum != null) {
                 out.append("wrapperSha256Sum=").append(wrapperSha256Sum).append(System.lineSeparator());
+            }
+            if (wrapperSha512Sum != null) {
+                out.append("wrapperSha512Sum=").append(wrapperSha512Sum).append(System.lineSeparator());
             }
             if (alwaysDownload) {
                 out.append("alwaysDownload=")

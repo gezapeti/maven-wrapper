@@ -65,8 +65,10 @@ public class Installer {
 
         boolean alwaysDownload = configuration.isAlwaysDownload();
         boolean alwaysUnpack = configuration.isAlwaysUnpack();
-        boolean verifyDistributionSha256Sum =
-                !configuration.getDistributionSha256Sum().isEmpty();
+        // SHA-512 is the algorithm published alongside the Maven distributions; a
+        // distributionSha256Sum left over from an older wrapper is still honoured.
+        String distributionSha512Sum = configuration.getDistributionSha512Sum();
+        String distributionSha256Sum = configuration.getDistributionSha256Sum();
 
         PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution(configuration);
         Path localZipFile = localDistribution.getZipFile();
@@ -90,12 +92,12 @@ public class Installer {
         List<Path> dirs = listDirs(distDir);
 
         if (downloaded || alwaysUnpack || dirs.isEmpty()) {
-            if (verifyDistributionSha256Sum) {
+            if (distributionSha512Sum != null && !distributionSha512Sum.isEmpty()) {
                 verifier.verify(
-                        localZipFile,
-                        "distributionSha256Sum",
-                        Verifier.SHA_256_ALGORITHM,
-                        configuration.getDistributionSha256Sum());
+                        localZipFile, "distributionSha512Sum", Verifier.SHA_512_ALGORITHM, distributionSha512Sum);
+            } else if (distributionSha256Sum != null && !distributionSha256Sum.isEmpty()) {
+                verifier.verify(
+                        localZipFile, "distributionSha256Sum", Verifier.SHA_256_ALGORITHM, distributionSha256Sum);
             }
             for (Path dir : dirs) {
                 Logger.info("Deleting directory " + dir.toAbsolutePath());
