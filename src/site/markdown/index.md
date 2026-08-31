@@ -197,15 +197,17 @@ file's SHA-512 sum in hex notation, using only small caps, to
 *maven-wrapper.jar* file is named `wrapperSha512Sum`, whereas the
 distribution file property is named `distributionSha512Sum`.
 
-SHA-512 is used because it is the only strong checksum published for these
-files. The Apache Maven distributions carry a `.sha512` file next to the
-archive, both on [the download page](https://maven.apache.org/download.cgi)
-and in the repository:
+SHA-512 is used because it is the checksum published for these files. Both
+carry a `.sha512` file next to them in the repository they are downloaded
+from, holding the bare checksum, so its content can be copied into
+`maven-wrapper.properties` verbatim:
 
     https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.zip.sha512
+    https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.3.5/maven-wrapper-3.3.5.jar.sha512
 
-The file contains the bare checksum, so its content can be copied into
-`maven-wrapper.properties` verbatim.
+For the Maven distributions the same checksums are linked from
+[the download page](https://maven.apache.org/download.cgi). The wrapper's
+own `.sha512` files are published as of Maven Wrapper 3.3.5.
 
 ### Migrating from SHA-256
 
