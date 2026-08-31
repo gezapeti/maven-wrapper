@@ -155,7 +155,7 @@ if ($distributionSum) {
   Import-Module $PSHOME\Modules\Microsoft.PowerShell.Utility -Function Get-FileHash
   $computedSum = (Get-FileHash "$TMP_DOWNLOAD_DIR/$distributionUrlName" -Algorithm $distributionSumAlgorithm).Hash.ToLower()
   if ($computedSum -ne $distributionSum) {
-    Write-Error "Error: Failed to validate the Maven distribution $distributionSumLabel. Your Maven distribution might be compromised. If you updated your Maven version, you need to update the specified $distributionSumProperty property. expected: $distributionSum received: $computedSum"
+    Write-Error "Error: Failed to validate the Maven distribution $distributionSumLabel. Your Maven distribution might be compromised. If you updated your Maven version, you need to update the specified $distributionSumProperty property. Expected $distributionSum but received $computedSum."
   }
 }
 
