@@ -70,7 +70,7 @@ under the License.
             </executions>
           </plugin>
           <!-- MWRAPPER-117: publish the checksums of maven-wrapper.jar, so that the
-               wrapperSha512Sum properties can be filled in from an
+               wrapperSha256Sum / wrapperSha512Sum properties can be filled in from an
                official source. The parent only checksums the source release. -->
           <plugin>
             <groupId>net.nicoulaj.maven.plugins</groupId>
@@ -85,6 +85,7 @@ under the License.
                 <phase>post-integration-test</phase>
                 <configuration>
                   <algorithms>
+                    <algorithm>SHA-256</algorithm>
                     <algorithm>SHA-512</algorithm>
                   </algorithms>
                   <!-- only the wrapper jar itself; the source release is handled by the parent -->

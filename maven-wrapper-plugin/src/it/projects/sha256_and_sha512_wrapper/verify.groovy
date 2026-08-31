@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -25,11 +24,14 @@ assert !(new File(basedir,'mvnwDebug.cmd').exists())
 
 properties = new File(basedir,'.mvn/wrapper/maven-wrapper.properties')
 assert properties.exists()
+// both checksums are written, so an existing sha256-based integration keeps working
 assert properties.text.contains('wrapperSha256Sum=7e0c63c6a99639e57cc64375d6717d72e301d8ab829fef2e145ee860317bc3cb')
+assert properties.text.contains('wrapperSha512Sum=256cdc53261371d6f6fefd92e99d85df5295d1f83ab826106768094a34e6f1b0eb4f7c30e75ada80218ed5bb384bdce334a6697354eef561f50adfc2113c881d')
 
 log = new File(basedir, 'build.log').text
-// check "mvn wrapper:wrapper" output
-assert log.contains('Error: Failed to validate the Maven wrapper SHA-256.')
+// when both are set the stronger one is the one verified
+assert log.contains('Error: Failed to validate the Maven wrapper SHA-512.')
+assert !log.contains('SHA-256.')
 assert !log.contains('shasum:')
 
 // check "mvnw -v" output

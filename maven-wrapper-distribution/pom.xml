@@ -88,6 +88,7 @@ under the License.
                 <phase>post-integration-test</phase>
                 <configuration>
                   <algorithms>
+                    <algorithm>SHA-256</algorithm>
                     <algorithm>SHA-512</algorithm>
                   </algorithms>
                   <excludeMainArtifact>true</excludeMainArtifact>

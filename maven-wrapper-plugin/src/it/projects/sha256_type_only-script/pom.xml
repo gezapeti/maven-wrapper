@@ -41,8 +41,7 @@ under the License.
           <configuration>
             <executable>mvnw${cmd}</executable>
             <successCodes>
-              <!-- the deprecated sha256 property is ignored, so the wrapper runs through -->
-              <successCode>0</successCode>
+              <successCode>1</successCode>
             </successCodes>
             <arguments>
               <argument>-v</argument>

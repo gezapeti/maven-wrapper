@@ -1,3 +1,4 @@
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -24,12 +25,11 @@ assert !(new File(basedir,'mvnwDebug.cmd').exists())
 
 properties = new File(basedir,'.mvn/wrapper/maven-wrapper.properties')
 assert properties.exists()
-// distributionSha256Sum is deprecated: the plugin must no longer write it, and must say so
-assert !properties.text.contains('distributionSha256Sum')
-assert !properties.text.contains('distributionSha512Sum')
+assert properties.text.contains('distributionSha256Sum=7e0c63c6a99639e57cc64375d6717d72e301d8ab829fef2e145ee860317bc3cb')
 
 log = new File(basedir, 'build.log').text
-assert log.contains('distributionSha256Sum is deprecated and ignored')
+// check "mvn wrapper:wrapper" output
+assert log.contains('Failed to validate Maven distribution SHA-256, your Maven distribution might be compromised.')
 
-// verification is off, so the wrapper runs through
+// check "mvnw -v" output
 assert log.contains('Apache Maven ')

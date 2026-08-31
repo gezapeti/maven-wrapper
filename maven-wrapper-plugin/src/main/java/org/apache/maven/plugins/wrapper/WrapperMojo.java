@@ -123,9 +123,12 @@ public class WrapperMojo extends AbstractMojo {
      * The expected SHA-256 checksum of the <i>maven-wrapper.jar</i> that is
      * used to load the configured Maven distribution.
      *
+     * <p>
+     * Still honoured, but prefer {@link #wrapperSha512Sum}: SHA-512 is the checksum
+     * published alongside the wrapper jar, so its value does not have to be computed by hand.
+     *
      * @since 3.2.0
-     * @deprecated SHA-256 checksums are not published for the wrapper jar;
-     *             use {@link #wrapperSha512Sum} instead. Ignored since 3.3.5.
+     * @deprecated prefer {@link #wrapperSha512Sum}; this parameter keeps working
      */
     @Deprecated
     @Parameter(property = "wrapperSha256Sum")
@@ -144,9 +147,12 @@ public class WrapperMojo extends AbstractMojo {
      * The expected SHA-256 checksum of the Maven distribution that is
      * executed by the installed wrapper.
      *
+     * <p>
+     * Still honoured, but prefer {@link #distributionSha512Sum}: no SHA-256 checksum is
+     * published for the Maven distributions, so its value has to be computed by hand.
+     *
      * @since 3.2.0
-     * @deprecated SHA-256 checksums are not published for the Maven distributions;
-     *             use {@link #distributionSha512Sum} instead. Ignored since 3.3.5.
+     * @deprecated prefer {@link #distributionSha512Sum}; this parameter keeps working
      */
     @Deprecated
     @Parameter(property = "distributionSha256Sum")
@@ -226,8 +232,6 @@ public class WrapperMojo extends AbstractMojo {
         final Path baseDir = Paths.get(session.getRequest().getBaseDirectory());
         final Path wrapperDir = baseDir.resolve(WRAPPER_DIR);
 
-        warnAboutDeprecatedSha256Parameters();
-
         if (distributionType == null) {
             distributionType = determineDistributionType(wrapperDir);
         }
@@ -246,24 +250,6 @@ public class WrapperMojo extends AbstractMojo {
         cleanup(wrapperDir);
         unpack(artifact, baseDir);
         replaceProperties(wrapperVersion, wrapperDir);
-    }
-
-    /**
-     * SHA-256 checksums are published neither for the Maven distributions nor for the wrapper jar,
-     * so these parameters are no longer written to {@code maven-wrapper.properties}. A checksum a
-     * user asked for must never be dropped silently.
-     */
-    private void warnAboutDeprecatedSha256Parameters() {
-        if (wrapperSha256Sum != null) {
-            getLog().warn("wrapperSha256Sum is deprecated and ignored, no SHA-256 checksum is published"
-                    + " for the wrapper jar. Use wrapperSha512Sum instead, its value is served at"
-                    + " <wrapperUrl>.sha512.");
-        }
-        if (distributionSha256Sum != null) {
-            getLog().warn("distributionSha256Sum is deprecated and ignored, no SHA-256 checksum is published"
-                    + " for the Maven distributions. Use distributionSha512Sum instead, its value is served at"
-                    + " <distributionUrl>.sha512.");
-        }
     }
 
     private String determineDistributionType(final Path wrapperDir) {
@@ -380,6 +366,11 @@ public class WrapperMojo extends AbstractMojo {
                     .append(distributionType)
                     .append(System.lineSeparator());
             out.append("distributionUrl=").append(finalDistributionUrl).append(System.lineSeparator());
+            if (distributionSha256Sum != null) {
+                out.append("distributionSha256Sum=")
+                        .append(distributionSha256Sum)
+                        .append(System.lineSeparator());
+            }
             if (distributionSha512Sum != null) {
                 out.append("distributionSha512Sum=")
                         .append(distributionSha512Sum)
@@ -387,6 +378,9 @@ public class WrapperMojo extends AbstractMojo {
             }
             if (!distributionType.equals(TYPE_ONLY_SCRIPT)) {
                 out.append("wrapperUrl=").append(wrapperUrl).append(System.lineSeparator());
+            }
+            if (wrapperSha256Sum != null) {
+                out.append("wrapperSha256Sum=").append(wrapperSha256Sum).append(System.lineSeparator());
             }
             if (wrapperSha512Sum != null) {
                 out.append("wrapperSha512Sum=").append(wrapperSha512Sum).append(System.lineSeparator());
